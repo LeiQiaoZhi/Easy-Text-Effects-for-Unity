@@ -193,14 +193,17 @@ There are 2 effect lists:
 Every element of an effect list has a `Trigger When` field, which determines when the effect is triggered. 
 - `On Start`: The effect will start when the text is enabled.
 - `Manual`: The effect will start only when a script tells it to.
-   - `StartAllManualEffects()`: start all manual effects in the global list.
+   - `StartManualEffects()`: start all manual effects in the global list.
    - `StartManualEffects(string effectName)`: start the manual effect with the given name in the global list.
    - `StartManualTagEffects()`: start all manual effects in the tag list.
    - `StartManualTagEffects(string effectName)`: start the manual effect with the given name in the tag list.
+   - There are also corresponding `Stop` methods. For implmentations, look at `Runtime\TextEffect.cs`.
 
 There are some debug buttons to help you test manual effects in the editor:
 
 <img src="Images/debug.png" width="50%" alt="">
+
+> If you have added/changed the effects during runtime and your text isn’t behaving correctly, you may want to call `textEffectScript.Refresh()`​ before calling the start effects methods. 
 
 ### Creating Your Own Effects
 
