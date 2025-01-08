@@ -1,13 +1,13 @@
 {
   "name": "com.qiaozhilei.easy-text-effects",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Easy Text Effects",
   "description": "Easily animate TextMeshPro text with stunning, customizable effects!",
   "unity": "2022.3",
   "author": {
     "name": "Qiaozhi Lei",
     "email": "georgeleiqiaozhi@gmail.com",
-    "url": "qiaozhi.lei.carrd.co"
+    "url": "github.com/LeiQiaoZhi"
   },
   "dependencies": {
     "com.unity.ugui": "1.0.0"
