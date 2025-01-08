@@ -199,29 +199,29 @@ namespace EasyTextEffects
 
         public void StartOnStartEffects()
         {
-            onStartEffects_.ForEach(_effect => _effect.effect.StartEffect());
-            onStartTagEffects_.ForEach(_effect => _effect.effect.StartEffect());
+            onStartEffects_.ForEach(_entry => _entry.effect.StartEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.effect.StartEffect());
             nextUpdateTime_ = 0; // immediately update
         }
 
         public void StartManualEffects()
         {
-            manualEffects_.ForEach(_effect => _effect.effect.StartEffect());
+            manualEffects_.ForEach(_entry => _entry.effect.StartEffect());
         }
 
         public void StopManualEffects()
         {
-            manualEffects_.ForEach(_effect => _effect.effect.StopEffect());
+            manualEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
         public void StartManualTagEffects()
         {
-            manualTagEffects_.ForEach(_effect => _effect.effect.StartEffect());
+            manualTagEffects_.ForEach(_entry => _entry.effect.StartEffect());
         }
 
         public void StopManualTagEffects()
         {
-            manualTagEffects_.ForEach(_effect => _effect.effect.StopEffect());
+            manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
         public void StartManualEffect(string _effectName)
