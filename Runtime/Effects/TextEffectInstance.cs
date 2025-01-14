@@ -1,7 +1,10 @@
 using EasyTextEffects.Editor.EditorDocumentation;
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
+
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Serialization;
+
 using static EasyTextEffects.Editor.EditorDocumentation.FoldBoxAttribute;
 
 namespace EasyTextEffects.Effects
@@ -68,6 +71,8 @@ namespace EasyTextEffects.Effects
 
         protected float startTime;
         protected bool started;
+        protected bool isComplete;
+        private TextEffectEntry currentEntry;
 
         protected bool CheckCanApplyEffect(int _charIndex)
         {
@@ -76,8 +81,11 @@ namespace EasyTextEffects.Effects
 
         public virtual void StartEffect()
         {
+            currentEntry = entry;
+
             started = true;
             startTime = TimeUtil.GetTime();
+            isComplete = false;
 
             if (animationType == AnimationType.OneTime || animationType == AnimationType.LoopFixedDuration)
             {
@@ -99,6 +107,7 @@ namespace EasyTextEffects.Effects
         public virtual void StopEffect()
         {
             started = false;
+            isComplete = true;
         }
 
         protected float Interpolate(float _start, float _end, int _charIndex)
@@ -134,8 +143,32 @@ namespace EasyTextEffects.Effects
         private float GetTimeForChar(int _charIndex)
         {
             var time = TimeUtil.GetTime();
+
+            // Check completion for LoopFixedDuration
             if (animationType == AnimationType.LoopFixedDuration && time - startTime > fixedDuration)
+            {
                 startTime += fixedDuration;
+                if (!isComplete)
+                {
+                    isComplete = true;
+                    currentEntry?.InvokeCompleted();
+                }
+            }
+
+            // Check completion for OneTime
+            else if (animationType == AnimationType.OneTime && !isComplete)
+            {
+                float totalDuration = noDelayForChars ?
+                    durationPerChar :
+                    (durationPerChar + (timeBetweenChars * (charLength - 1)));
+
+                if (time - startTime > totalDuration)
+                {
+                    isComplete = true;
+                    currentEntry?.InvokeCompleted();
+                }
+            }
+
 
             var charOrder = _charIndex - startCharIndex;
             if (reverseCharOrder)
@@ -143,6 +176,8 @@ namespace EasyTextEffects.Effects
             var charStartTime = startTime + timeBetweenChars * charOrder;
             return time - charStartTime;
         }
+
+        public bool IsComplete() => isComplete;
 
         public virtual TextEffectInstance Instantiate()
         {

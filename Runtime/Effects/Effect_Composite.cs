@@ -30,16 +30,16 @@ namespace EasyTextEffects.Effects
             }
         }
 
-        public override void StartEffect()
+        public override void StartEffect(TextEffectEntry entry)
         {
-            base.StartEffect();
+            base.StartEffect(entry);
             
             foreach (TextEffectInstance effect in effects)
             {
                 if (!effect) continue;
                 effect.startCharIndex = startCharIndex;
                 effect.charLength = charLength;
-                effect.StartEffect();
+                effect.StartEffect(entry);
             }
         }
 

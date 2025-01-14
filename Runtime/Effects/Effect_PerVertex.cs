@@ -51,9 +51,9 @@ namespace EasyTextEffects.Effects
             bottomRightEffects.ForEach(_effect => _effect?.ApplyEffect(_textInfo, _charIndex, 3, 3));
         }
 
-        public override void StartEffect()
+        public override void StartEffect(TextEffectEntry entry)
         {
-            base.StartEffect();
+            base.StartEffect(entry);
             var allEffects = new List<List<TextEffectInstance>> 
             {
                 topLeftEffects,
@@ -69,7 +69,7 @@ namespace EasyTextEffects.Effects
                     if (!effect) continue;
                     effect.startCharIndex = startCharIndex;
                     effect.charLength = charLength;
-                    effect.StartEffect();
+                    effect.StartEffect(entry);
                 }
             }
 

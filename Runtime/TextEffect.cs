@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
 using EasyTextEffects.Editor.MyBoxCopy.Extensions;
 using EasyTextEffects.Effects;
+
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -67,6 +69,7 @@ namespace EasyTextEffects
                 effectEntry.effect.startCharIndex = 0;
                 effectEntry.effect.charLength = textInfo.characterCount;
                 effectEntry.overrideTagEffects = _entry.overrideTagEffects;
+                effectEntry.onEffectCompleted = _entry.onEffectCompleted;
                 if (_entry.triggerWhen == GlobalTextEffectEntry.TriggerWhen.OnStart)
                     onStartEffects_.Add(effectEntry);
                 else
@@ -222,14 +225,14 @@ namespace EasyTextEffects
 
         public void StartOnStartEffects()
         {
-            onStartEffects_.ForEach(_entry => _entry.effect.StartEffect());
-            onStartTagEffects_.ForEach(_entry => _entry.effect.StartEffect());
+            onStartEffects_.ForEach(_entry => _entry.StartEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.StartEffect());
             nextUpdateTime_ = 0; // immediately update
         }
 
         public void StartManualEffects()
         {
-            manualEffects_.ForEach(_entry => _entry.effect.StartEffect());
+            manualEffects_.ForEach(_entry => _entry.StartEffect());
         }
 
         public void StopManualEffects()
@@ -239,7 +242,7 @@ namespace EasyTextEffects
 
         public void StartManualTagEffects()
         {
-            manualTagEffects_.ForEach(_entry => _entry.effect.StartEffect());
+            manualTagEffects_.ForEach(_entry => _entry.StartEffect());
         }
 
         public void StopManualTagEffects()
@@ -254,7 +257,7 @@ namespace EasyTextEffects
             var names = manualEffects_.Select(_entry => _entry.effect.effectTag).ToList();
 
             if (effectEntry != null)
-                effectEntry.effect.StartEffect();
+                effectEntry.StartEffect();
             else
             {
                 Debug.LogWarning($"Effect {_effectName} not found");
@@ -269,7 +272,7 @@ namespace EasyTextEffects
             var names = manualTagEffects_.Select(_entry => _entry.effect.effectTag).ToList();
 
             if (effectEntry != null)
-                effectEntry.effect.StartEffect();
+                effectEntry.StartEffect();
             else
             {
                 Debug.LogWarning($"Effect {_effectName} not found");
