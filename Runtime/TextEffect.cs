@@ -28,6 +28,8 @@ namespace EasyTextEffects
         public List<GlobalTextEffectEntry> globalEffects;
 
         [Space(5)] [Range(1, 120)] public int updatesPerSecond = 30;
+        
+        public bool ignoreTimeScale;
 
         private List<TextEffectEntry> allTagEffects_;
         private List<TextEffectEntry> onStartTagEffects_;
@@ -183,7 +185,7 @@ namespace EasyTextEffects
             if (!text)
                 return;
 
-            var time = TimeUtil.GetTime();
+            var time = ignoreTimeScale ? timeUtil.getUnscaleTime : TimeUtil.GetTime();
             if (time < nextUpdateTime_)
                 return;
             nextUpdateTime_ = time + 1f / updatesPerSecond;
