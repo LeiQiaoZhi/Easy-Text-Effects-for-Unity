@@ -185,7 +185,7 @@ namespace EasyTextEffects
             if (!text)
                 return;
 
-            var time = ignoreTimeScale ? timeUtil.getUnscaleTime : TimeUtil.GetTime();
+            var time = ignoreTimeScale ? TimeUtil.getUnscaleTime : TimeUtil.GetTime();
             if (time < nextUpdateTime_)
                 return;
             nextUpdateTime_ = time + 1f / updatesPerSecond;
