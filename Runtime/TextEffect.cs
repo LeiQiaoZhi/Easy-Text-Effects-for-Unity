@@ -105,10 +105,8 @@ namespace EasyTextEffects
                 {
                     if (entry.effect == null)
                         continue;
-                    var entryCopy = new TextEffectEntry();
-                    entryCopy.effect = entry.effect.Instantiate();
-                    entryCopy.effect.startCharIndex = style.linkTextfirstCharacterIndex;
-                    entryCopy.effect.charLength = style.linkTextLength;
+                    // note: make sure onEffectCompleted events get copied 
+                    TextEffectEntry entryCopy = entry.GetCopy(style);
                     if (entry.triggerWhen == OnStart)
                         onStartTagEffects_.Add(entryCopy);
                     else
