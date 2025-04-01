@@ -106,7 +106,9 @@ namespace EasyTextEffects
                     if (entry.effect == null)
                         continue;
                     // note: make sure onEffectCompleted events get copied 
-                    TextEffectEntry entryCopy = entry.GetCopy(style);
+                    TextEffectEntry entryCopy = entry.GetCopy(
+                        style.linkTextfirstCharacterIndex,
+                        style.linkTextLength);
                     if (entry.triggerWhen == OnStart)
                         onStartTagEffects_.Add(entryCopy);
                     else

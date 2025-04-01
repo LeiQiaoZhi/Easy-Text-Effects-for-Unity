@@ -2,7 +2,6 @@ using EasyTextEffects.Effects;
 
 using UnityEngine;
 using UnityEngine.Events;
-using TMPro;
 
 namespace EasyTextEffects
 {
@@ -21,12 +20,12 @@ namespace EasyTextEffects
         public UnityEvent onEffectCompleted = new UnityEvent();
         
         
-        public TextEffectEntry GetCopy(TMP_LinkInfo style)
+        public TextEffectEntry GetCopy(int startCharIndex, int charLength)
         {
             var entryCopy = new TextEffectEntry();
             entryCopy.effect = effect.Instantiate();
-            entryCopy.effect.startCharIndex = style.linkTextfirstCharacterIndex;
-            entryCopy.effect.charLength = style.linkTextLength;
+            entryCopy.effect.startCharIndex = startCharIndex;
+            entryCopy.effect.charLength = charLength;
             entryCopy.triggerWhen = triggerWhen;
             entryCopy.onEffectCompleted = onEffectCompleted;
             
