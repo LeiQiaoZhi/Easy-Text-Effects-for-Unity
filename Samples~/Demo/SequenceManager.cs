@@ -48,12 +48,24 @@ namespace EasyTextEffects.Samples
         private void StopEffect(int _index)
         {
             GameObject currentSlide = slides[_index];
-            // currentSlide.SetActive(false);
             var currentText = currentSlide.GetComponentInChildren<TextEffect>();
-            if (currentText != null)
+            if (currentText == null)
             {
-                currentText.StartManualEffect("exit");
+                currentSlide.SetActive(false);
+                return;
             }
+            currentText.StopOnStartEffects();
+            var effect = currentText.StartManualEffect("exit");
+            if (effect == null)
+            {
+                currentSlide.SetActive(false);
+                return;
+            }
+            effect.onEffectCompleted.AddListener(() => 
+            {
+                currentSlide.SetActive(false);
+                effect.onEffectCompleted.RemoveAllListeners();
+            });
         }
 
         private void StartEffect(int _index)
