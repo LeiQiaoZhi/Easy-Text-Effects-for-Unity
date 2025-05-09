@@ -28,19 +28,17 @@ namespace EasyTextEffects.Samples
 
         public void NextSlide()
         {
-            if (currentSlideIndex_ < slides.Count - 1)
+            if (currentSlideIndex_ > -1 && currentSlideIndex_ < slides.Count)
             {
-                if (currentSlideIndex_ >= 0)
-                {
-                    StopEffect(currentSlideIndex_);
-                }
-
-                currentSlideIndex_++;
+                StopEffect(currentSlideIndex_);
+            }
+            currentSlideIndex_++;
+            if (currentSlideIndex_ > -1 && currentSlideIndex_ < slides.Count)
+            {
                 Invoke(nameof(StartCurrentEffect), slideDelays[currentSlideIndex_]);
             }
             else
             {
-                StopEffect(slides.Count - 1);
                 currentSlideIndex_ = -1;
             }
         }
