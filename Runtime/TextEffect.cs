@@ -268,34 +268,28 @@ namespace EasyTextEffects
             manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
-        public void StartManualEffect(string _effectName)
+        public GlobalTextEffectEntry StartManualEffect(string _effectName)
         {
             GlobalTextEffectEntry effectEntry = manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
-
-            var names = manualEffects_.Select(_entry => _entry.effect.effectTag).ToList();
-
             if (effectEntry != null)
-                effectEntry.StartEffect();
-            else
             {
-                Debug.LogWarning($"Effect {_effectName} not found");
-                Debug.Log($"Available effects: {string.Join(", ", names)}");
+                effectEntry.StartEffect();
+                return effectEntry;
             }
+            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            return null;
         }
 
-        public void StartManualTagEffect(string _effectName)
+        public TextEffectEntry StartManualTagEffect(string _effectName)
         {
             TextEffectEntry effectEntry = manualTagEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
-
-            var names = manualTagEffects_.Select(_entry => _entry.effect.effectTag).ToList();
-
             if (effectEntry != null)
-                effectEntry.StartEffect();
-            else
             {
-                Debug.LogWarning($"Effect {_effectName} not found");
-                Debug.Log($"Available effects: {string.Join(", ", names)}");
+                effectEntry.StartEffect();
+                return effectEntry;
             }
+            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            return null;
         }
 
         public List<TextEffectStatus> QueryEffectStatuses(TextEffectType _effectType,
