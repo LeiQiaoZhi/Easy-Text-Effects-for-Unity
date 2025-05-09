@@ -294,7 +294,8 @@ namespace EasyTextEffects
                 : _triggerWhen == OnStart
                     ? onStartTagEffects_
                     : manualTagEffects_;
-
+            if (effectsList == null)
+                return new List<TextEffectStatus>();
             return effectsList.Select(_entry => new TextEffectStatus
             {
                 Tag = _entry.effect.effectTag,
@@ -313,7 +314,8 @@ namespace EasyTextEffects
                 : _triggerWhen == OnStart
                     ? onStartTagEffects_
                     : manualTagEffects_;
-
+            if (effectsList == null)
+                return new List<TextEffectStatus>();
             return effectsList
                 .Where(_entry => _entry.effect.effectTag == _tag)
                 .Select(_entry => new TextEffectStatus
