@@ -227,11 +227,25 @@ namespace EasyTextEffects
 
         #region API
 
+        public void StopAllEffects()
+        {
+            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            manualEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+        }
+
         public void StartOnStartEffects()
         {
             onStartEffects_.ForEach(_entry => _entry.StartEffect());
             onStartTagEffects_.ForEach(_entry => _entry.StartEffect());
             nextUpdateTime_ = 0; // immediately update
+        }
+
+        public void StopOnStartEffects()
+        {
+            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
         public void StartManualEffects()

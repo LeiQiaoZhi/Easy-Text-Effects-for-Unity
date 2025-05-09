@@ -98,6 +98,19 @@ namespace EasyTextEffects.Editor
                 }
 
                 GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("STOP All Effects", buttonStyle))
+                {
+                    myScript.StopAllEffects();
+                }
+
+                if (GUILayout.Button("STOP OnStart Effects", buttonStyle))
+                {
+                    myScript.StopOnStartEffects();
+                }
+
+                GUILayout.EndHorizontal();
             }
 
             EndFoldBox();
