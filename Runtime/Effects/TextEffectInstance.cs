@@ -1,10 +1,8 @@
 using EasyTextEffects.Editor.EditorDocumentation;
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
-
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-
 using static EasyTextEffects.Editor.EditorDocumentation.FoldBoxAttribute;
 
 namespace EasyTextEffects.Effects
@@ -19,7 +17,8 @@ namespace EasyTextEffects.Effects
             OneTime
         }
 
-        [Space(10)] [Header("Type")] 
+        [Space(10)]
+        [Header("Type")]
         [FoldBox("",
             new[]
             {
@@ -66,7 +65,14 @@ namespace EasyTextEffects.Effects
 
         [Space(10)] [FormerlySerializedAs("curve")] [Header("Curve")]
         public AnimationCurve easingCurve = AnimationCurve.Linear(0, 0, 1, 1);
+
         public bool clampBetween0And1;
+
+        [Header("Time")]
+        [FoldBox("Time Explained",
+            new[] { "ScaledTime -- dependent on time scale \nUnscaledTime -- independent of time scale", },
+            new[] { ContentType.Text })]
+        public TimeUtil.TimeType timeType = TimeUtil.TimeType.ScaledTime;
 
 
         protected float startTime;
@@ -85,7 +91,7 @@ namespace EasyTextEffects.Effects
             currentEntry = entry;
 
             started = true;
-            startTime = TimeUtil.GetTime();
+            startTime = TimeUtil.GetTime(timeType);
             isComplete = false;
 
             if (animationType == AnimationType.OneTime || animationType == AnimationType.LoopFixedDuration)
@@ -143,7 +149,7 @@ namespace EasyTextEffects.Effects
 
         private float GetTimeForChar(int _charIndex)
         {
-            var time = TimeUtil.GetTime();
+            var time = TimeUtil.GetTime(timeType);
 
             // Check completion for LoopFixedDuration
             if (animationType == AnimationType.LoopFixedDuration && time - startTime > fixedDuration)
@@ -159,9 +165,9 @@ namespace EasyTextEffects.Effects
             // Check completion for OneTime
             else if (animationType == AnimationType.OneTime && !isComplete)
             {
-                float totalDuration = noDelayForChars ?
-                    durationPerChar :
-                    (durationPerChar + (timeBetweenChars * (charLength - 1)));
+                float totalDuration = noDelayForChars
+                    ? durationPerChar
+                    : (durationPerChar + (timeBetweenChars * (charLength - 1)));
 
                 if (time - startTime > totalDuration)
                 {

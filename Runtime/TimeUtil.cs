@@ -10,12 +10,17 @@ namespace EasyTextEffects
 #if UNITY_EDITOR
         private static float _editorStartTime = -1;
 #endif
+        public enum TimeType
+        {
+            ScaledTime, // dependent on time scale
+            UnscaledTime, // independent of time scale
+        }
 
-        public static float GetTime()
+        public static float GetTime(TimeType timeType = TimeType.ScaledTime)
         {
             if (Application.isPlaying)
             {
-                return Time.time;
+                return timeType == TimeType.ScaledTime ? Time.time : Time.unscaledTime;
             }
             else
             {

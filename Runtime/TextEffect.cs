@@ -184,7 +184,8 @@ namespace EasyTextEffects
             if (!text)
                 return;
 
-            var time = TimeUtil.GetTime();
+            // updates should be independent of time scale
+            var time = TimeUtil.GetTime(TimeUtil.TimeType.UnscaledTime); 
             if (time < nextUpdateTime_)
                 return;
             nextUpdateTime_ = time + 1f / updatesPerSecond;
