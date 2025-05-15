@@ -28,19 +28,17 @@ namespace EasyTextEffects.Samples
 
         public void NextSlide()
         {
-            if (currentSlideIndex_ < slides.Count - 1)
+            if (currentSlideIndex_ > -1 && currentSlideIndex_ < slides.Count)
             {
-                if (currentSlideIndex_ >= 0)
-                {
-                    StopEffect(currentSlideIndex_);
-                }
-
-                currentSlideIndex_++;
+                StopEffect(currentSlideIndex_);
+            }
+            currentSlideIndex_++;
+            if (currentSlideIndex_ > -1 && currentSlideIndex_ < slides.Count)
+            {
                 Invoke(nameof(StartCurrentEffect), slideDelays[currentSlideIndex_]);
             }
             else
             {
-                StopEffect(slides.Count - 1);
                 currentSlideIndex_ = -1;
             }
         }
@@ -48,12 +46,24 @@ namespace EasyTextEffects.Samples
         private void StopEffect(int _index)
         {
             GameObject currentSlide = slides[_index];
-            // currentSlide.SetActive(false);
             var currentText = currentSlide.GetComponentInChildren<TextEffect>();
-            if (currentText != null)
+            if (currentText == null)
             {
-                currentText.StartManualEffect("exit");
+                currentSlide.SetActive(false);
+                return;
             }
+            currentText.StopOnStartEffects();
+            var effect = currentText.StartManualEffect("exit");
+            if (effect == null)
+            {
+                currentSlide.SetActive(false);
+                return;
+            }
+            effect.onEffectCompleted.AddListener(() => 
+            {
+                currentSlide.SetActive(false);
+                effect.onEffectCompleted.RemoveAllListeners();
+            });
         }
 
         private void StartEffect(int _index)

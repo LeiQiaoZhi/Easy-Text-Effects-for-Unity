@@ -228,11 +228,25 @@ namespace EasyTextEffects
 
         #region API
 
+        public void StopAllEffects()
+        {
+            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            manualEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+        }
+
         public void StartOnStartEffects()
         {
             onStartEffects_.ForEach(_entry => _entry.StartEffect());
             onStartTagEffects_.ForEach(_entry => _entry.StartEffect());
             nextUpdateTime_ = 0; // immediately update
+        }
+
+        public void StopOnStartEffects()
+        {
+            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
         public void StartManualEffects()
@@ -255,34 +269,28 @@ namespace EasyTextEffects
             manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
-        public void StartManualEffect(string _effectName)
+        public GlobalTextEffectEntry StartManualEffect(string _effectName)
         {
             GlobalTextEffectEntry effectEntry = manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
-
-            var names = manualEffects_.Select(_entry => _entry.effect.effectTag).ToList();
-
             if (effectEntry != null)
-                effectEntry.StartEffect();
-            else
             {
-                Debug.LogWarning($"Effect {_effectName} not found");
-                Debug.Log($"Available effects: {string.Join(", ", names)}");
+                effectEntry.StartEffect();
+                return effectEntry;
             }
+            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            return null;
         }
 
-        public void StartManualTagEffect(string _effectName)
+        public TextEffectEntry StartManualTagEffect(string _effectName)
         {
             TextEffectEntry effectEntry = manualTagEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
-
-            var names = manualTagEffects_.Select(_entry => _entry.effect.effectTag).ToList();
-
             if (effectEntry != null)
-                effectEntry.StartEffect();
-            else
             {
-                Debug.LogWarning($"Effect {_effectName} not found");
-                Debug.Log($"Available effects: {string.Join(", ", names)}");
+                effectEntry.StartEffect();
+                return effectEntry;
             }
+            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            return null;
         }
 
         public List<TextEffectStatus> QueryEffectStatuses(TextEffectType _effectType,
@@ -295,7 +303,8 @@ namespace EasyTextEffects
                 : _triggerWhen == OnStart
                     ? onStartTagEffects_
                     : manualTagEffects_;
-
+            if (effectsList == null)
+                return new List<TextEffectStatus>();
             return effectsList.Select(_entry => new TextEffectStatus
             {
                 Tag = _entry.effect.effectTag,
@@ -314,7 +323,8 @@ namespace EasyTextEffects
                 : _triggerWhen == OnStart
                     ? onStartTagEffects_
                     : manualTagEffects_;
-
+            if (effectsList == null)
+                return new List<TextEffectStatus>();
             return effectsList
                 .Where(_entry => _entry.effect.effectTag == _tag)
                 .Select(_entry => new TextEffectStatus
