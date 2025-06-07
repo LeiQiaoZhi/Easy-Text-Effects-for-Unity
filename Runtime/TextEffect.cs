@@ -160,8 +160,8 @@ namespace EasyTextEffects
         private void OnValidate()
         {
 #if UNITY_EDITOR
-            Refresh();
             ListenForEffectChanges();
+            Refresh();
 #endif
         }
         
@@ -187,8 +187,8 @@ namespace EasyTextEffects
 #if UNITY_EDITOR
             EditorApplication.update += Update;
 #endif
-            Refresh();
             ListenForEffectChanges();
+            Refresh();
         }
 
         private void OnDisable()
