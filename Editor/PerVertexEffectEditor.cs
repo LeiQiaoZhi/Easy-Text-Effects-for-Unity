@@ -33,6 +33,8 @@ A simple example: you could let the top vertices move up and down while keeping 
 
             EditorDocumentation.EditorDocumentation.EndFoldBox();
 
+            EditorGUI.BeginChangeCheck();
+            
             serializedObject.Update();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("effectTag"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("topLeftEffects"), true);
@@ -40,6 +42,8 @@ A simple example: you could let the top vertices move up and down while keeping 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("bottomLeftEffects"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("bottomRightEffects"), true);
             serializedObject.ApplyModifiedProperties();
+
+            if (EditorGUI.EndChangeCheck()) myScript.HandleValueChanged();
         }
     }
 }
