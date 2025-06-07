@@ -1,15 +1,24 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using EasyTextEffects.Editor.MyBoxCopy.Extensions;
 using TMPro;
 using UnityEngine;
 
 namespace EasyTextEffects.Effects
 {
-    [CreateAssetMenu(fileName = "Composite", menuName = "Easy Text Effects/6. Composite", order = 6)]
+    [CreateAssetMenu(fileName = "Composite", menuName = "Easy Text Effects/6. Composite",
+                     order = 6)]
     public class Effect_Composite : TextEffectInstance
     {
         [Space(10)] public List<TextEffectInstance> effects = new List<TextEffectInstance>();
+        private HashSet<TextEffectInstance> monitoredEffects = new();
 
+        private void OnEnable()
+        {
+            ListenForEffectChanges();
+        }
+        
         private void OnValidate()
         {
             if (effects.Contains(this))
@@ -17,10 +26,18 @@ namespace EasyTextEffects.Effects
                 Debug.LogError("Composite effect can't contain itself");
                 effects.Remove(this);
             }
+
+            ListenForEffectChanges();
         }
 
-        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
-            int _endVertex = 3)
+        private void OnDisable()
+        {
+            ListenForEffectChanges();
+        }
+
+        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex,
+                                         int _startVertex = 0,
+                                         int _endVertex = 3)
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
 
@@ -56,7 +73,8 @@ namespace EasyTextEffects.Effects
             }
         }
 
-        public override bool IsComplete => effects.Any(_effect => _effect != null && _effect.IsComplete);
+        public override bool IsComplete =>
+            effects.Any(_effect => _effect != null && _effect.IsComplete);
 
         public override TextEffectInstance Instantiate()
         {
@@ -69,6 +87,33 @@ namespace EasyTextEffects.Effects
             }
 
             return instance;
+        }
+        
+        private void ListenForEffectChanges()
+        {
+            if (effects == null)
+            {
+                StopListeningForEffectChanges();
+                return;
+            }
+
+            var effectsSet = effects.ToHashSet();
+    
+            foreach (var effect in effectsSet.Where(effect => monitoredEffects.Add(effect)))
+                effect.OnValueChanged += HandleValueChanged;
+
+            monitoredEffects.RemoveWhere(effect =>
+            {
+                if (effectsSet.Contains(effect)) return false;
+                effect.OnValueChanged -= HandleValueChanged;
+                return true;
+            });
+        }
+
+        private void StopListeningForEffectChanges()
+        {
+            monitoredEffects.ForEach(x => x.OnValueChanged -= HandleValueChanged);
+            monitoredEffects.Clear();
         }
     }
 }
