@@ -1,6 +1,5 @@
 using EasyTextEffects.Editor.EditorDocumentation;
 using TMPro;
-using Unity.Android.Gradle.Manifest;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -39,7 +38,7 @@ namespace EasyTextEffects
         }
 
         public abstract void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
-                                         int _endVertex = 3);
+            int _endVertex = 3);
 
         protected Vector3 CharCenter(TMP_CharacterInfo _charInfo, Vector3[] _verts)
         {
