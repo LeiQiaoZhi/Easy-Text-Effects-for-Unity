@@ -35,9 +35,8 @@ namespace EasyTextEffects.Effects
             ListenForEffectChanges();
         }
 
-        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex,
-                                         int _startVertex = 0,
-                                         int _endVertex = 3)
+        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
+            int _endVertex = 3)
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
 
