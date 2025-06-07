@@ -10,7 +10,9 @@ namespace EasyTextEffects.Editor
         {
             var myScript = (Effect_Move)target;
             EditorGUI.BeginChangeCheck();
+            serializedObject.Update();
             DrawDefaultInspector();
+            serializedObject.ApplyModifiedProperties();
             if (EditorGUI.EndChangeCheck()) myScript.HandleValueChanged();
         }
     }
