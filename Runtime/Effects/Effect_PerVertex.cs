@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using EasyTextEffects.Editor.MyBoxCopy.Extensions;
 using TMPro;
 using UnityEngine;
 
@@ -8,11 +9,19 @@ namespace EasyTextEffects.Effects
     [CreateAssetMenu(fileName = "PerVertex", menuName = "Easy Text Effects/5. Per Vertex", order = 5)]
     public class Effect_PerVertex : TextEffectInstance
     {
+        private static readonly List<TextEffectInstance> EmptyEffectInstanceList = new();
+        private readonly HashSet<TextEffectInstance> monitoredEffects = new();
+        
         [Space(10)] public List<TextEffectInstance> topLeftEffects = new List<TextEffectInstance>();
         [Space(10)] public List<TextEffectInstance> topRightEffects = new List<TextEffectInstance>();
         [Space(10)] public List<TextEffectInstance> bottomLeftEffects = new List<TextEffectInstance>();
         [Space(10)] public List<TextEffectInstance> bottomRightEffects = new List<TextEffectInstance>();
 
+        private void OnEnable()
+        {
+            ListenForEffectChanges();
+        }
+        
         private void OnValidate()
         {
             if (topLeftEffects.Contains(this))
@@ -38,6 +47,13 @@ namespace EasyTextEffects.Effects
                 Debug.LogError("Per Vertex effect can't contain itself");
                 bottomRightEffects.Remove(this);
             }
+            
+            ListenForEffectChanges();
+        }
+
+        private void OnDisable()
+        {
+            StopListeningForEffectChanges();
         }
 
         public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
@@ -102,6 +118,32 @@ namespace EasyTextEffects.Effects
             instance.bottomLeftEffects = bottomLeftEffects.Select(_effect => _effect?.Instantiate()).ToList();
             instance.bottomRightEffects = bottomRightEffects.Select(_effect => _effect?.Instantiate()).ToList();
             return instance;
+        }
+        
+        private void ListenForEffectChanges()
+        {
+            var effects = (topLeftEffects ?? EmptyEffectInstanceList)
+                          .Concat(topRightEffects ?? EmptyEffectInstanceList)
+                          .Concat(bottomLeftEffects ?? EmptyEffectInstanceList)
+                          .Concat(bottomRightEffects ?? EmptyEffectInstanceList)
+                          .Where(effect => effect)
+                          .ToHashSet();
+    
+            foreach (var effect in effects.Where(effect => monitoredEffects.Add(effect)))
+                effect.OnValueChanged += HandleValueChanged;
+
+            monitoredEffects.RemoveWhere(effect =>
+            {
+                if (effects.Contains(effect)) return false;
+                effect.OnValueChanged -= HandleValueChanged;
+                return true;
+            });
+        }
+
+        private void StopListeningForEffectChanges()
+        {
+            monitoredEffects.ForEach(x => x.OnValueChanged -= HandleValueChanged);
+            monitoredEffects.Clear();
         }
     }
 }
