@@ -9,6 +9,7 @@ using TMPro;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using static EasyTextEffects.TextEffectEntry.TriggerWhen;
 
@@ -164,25 +165,31 @@ namespace EasyTextEffects
             Refresh();
 #endif
         }
-        
+
         private void ListenForEffectChanges()
         {
-            StopListeningForEffectChanges();
-            allEffectInstances.Clear();
+            var effects = (tagEffects ?? new List<TextEffectEntry>())
+                          .Concat(globalEffects ?? new List<GlobalTextEffectEntry>())
+                          .Where(entry => entry.effect)
+                          .Select(entry => entry.effect)
+                          .ToHashSet();
 
-            if (tagEffects != null)
-                foreach (var entry in tagEffects.Where(entry => entry.effect))
-                    allEffectInstances.Add(entry.effect);
-
-            if (globalEffects != null)
-                foreach (var entry in globalEffects.Where(entry => entry.effect))
-                    allEffectInstances.Add(entry.effect);
+            foreach (var effect in effects.Where(effect => allEffectInstances.Add(effect)))
+                effect.OnValueChanged += Refresh;
             
-            allEffectInstances.ForEach(x => x.OnValueChanged += Refresh);
+            allEffectInstances.RemoveWhere(effect =>
+            {
+                if (effects.Contains(effect)) return false;
+                effect.OnValueChanged -= Refresh;
+                return true;
+            });
         }
 
-        private void StopListeningForEffectChanges() =>
+        private void StopListeningForEffectChanges()
+        {
             allEffectInstances.ForEach(x => x.OnValueChanged -= Refresh);
+            allEffectInstances.Clear();
+        }
 
         private void OnEnable()
         {
