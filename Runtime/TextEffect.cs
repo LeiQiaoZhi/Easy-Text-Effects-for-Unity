@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
@@ -28,7 +29,8 @@ namespace EasyTextEffects
         public List<GlobalTextEffectEntry> globalEffects;
 
         [Space(5)] [Range(1, 120)] public int updatesPerSecond = 30;
-
+        
+        private readonly HashSet<TextEffectInstance> allEffectInstances = new ();
         private List<TextEffectEntry> allTagEffects_;
         private List<TextEffectEntry> onStartTagEffects_;
         private List<TextEffectEntry> manualTagEffects_;
@@ -159,8 +161,26 @@ namespace EasyTextEffects
         {
 #if UNITY_EDITOR
             Refresh();
+            ListenForEffectChanges();
 #endif
         }
+        
+        private void ListenForEffectChanges()
+        {
+            StopListeningForEffectChanges();
+            allEffectInstances.Clear();
+
+            foreach (var entry in tagEffects.Where(entry => entry.effect))
+                allEffectInstances.Add(entry.effect);
+
+            foreach (var entry in globalEffects.Where(entry => entry.effect))
+                allEffectInstances.Add(entry.effect);
+            
+            allEffectInstances.ForEach(x => x.OnValueChanged += Refresh);
+        }
+
+        private void StopListeningForEffectChanges() =>
+            allEffectInstances.ForEach(x => x.OnValueChanged -= Refresh);
 
         private void OnEnable()
         {
@@ -168,6 +188,7 @@ namespace EasyTextEffects
             EditorApplication.update += Update;
 #endif
             Refresh();
+            ListenForEffectChanges();
         }
 
         private void OnDisable()
@@ -175,6 +196,7 @@ namespace EasyTextEffects
 #if UNITY_EDITOR
             EditorApplication.update -= Update;
 #endif
+            StopListeningForEffectChanges();
         }
 
         private float nextUpdateTime_ = 0;
