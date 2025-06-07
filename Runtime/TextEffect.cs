@@ -146,27 +146,6 @@ namespace EasyTextEffects
             return results;
         }
 
-        public void Refresh()
-        {
-            if (text == null)
-                return;
-            text.ForceMeshUpdate();
-            UpdateStyleInfos();
-        }
-
-        private void Reset()
-        {
-            text = GetComponent<TMP_Text>();
-        }
-
-        private void OnValidate()
-        {
-#if UNITY_EDITOR
-            ListenForEffectChanges();
-            Refresh();
-#endif
-        }
-
         private void ListenForEffectChanges()
         {
             var effects = (tagEffects ?? EmptyEffectEntryList)
@@ -190,6 +169,27 @@ namespace EasyTextEffects
         {
             monitoredEffects.ForEach(x => x.OnValueChanged -= Refresh);
             monitoredEffects.Clear();
+        }
+
+        public void Refresh()
+        {
+            if (text == null)
+                return;
+            text.ForceMeshUpdate();
+            UpdateStyleInfos();
+        }
+
+        private void Reset()
+        {
+            text = GetComponent<TMP_Text>();
+        }
+
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            ListenForEffectChanges();
+            Refresh();
+#endif
         }
 
         private void OnEnable()
