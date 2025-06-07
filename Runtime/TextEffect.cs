@@ -170,11 +170,13 @@ namespace EasyTextEffects
             StopListeningForEffectChanges();
             allEffectInstances.Clear();
 
-            foreach (var entry in tagEffects.Where(entry => entry.effect))
-                allEffectInstances.Add(entry.effect);
+            if (tagEffects != null)
+                foreach (var entry in tagEffects.Where(entry => entry.effect))
+                    allEffectInstances.Add(entry.effect);
 
-            foreach (var entry in globalEffects.Where(entry => entry.effect))
-                allEffectInstances.Add(entry.effect);
+            if (globalEffects != null)
+                foreach (var entry in globalEffects.Where(entry => entry.effect))
+                    allEffectInstances.Add(entry.effect);
             
             allEffectInstances.ForEach(x => x.OnValueChanged += Refresh);
         }
