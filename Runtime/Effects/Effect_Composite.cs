@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using EasyTextEffects.Editor.MyBoxCopy.Extensions;
@@ -11,8 +10,9 @@ namespace EasyTextEffects.Effects
                      order = 6)]
     public class Effect_Composite : TextEffectInstance
     {
-        [Space(10)] public List<TextEffectInstance> effects = new List<TextEffectInstance>();
         private HashSet<TextEffectInstance> monitoredEffects = new();
+        
+        [Space(10)] public List<TextEffectInstance> effects = new List<TextEffectInstance>();
 
         private void OnEnable()
         {
@@ -91,13 +91,13 @@ namespace EasyTextEffects.Effects
         
         private void ListenForEffectChanges()
         {
-            if (effects == null)
+            if (effects.IsNullOrEmpty())
             {
                 StopListeningForEffectChanges();
                 return;
             }
 
-            var effectsSet = effects.ToHashSet();
+            var effectsSet = effects.Where(effect => effect).ToHashSet();
     
             foreach (var effect in effectsSet.Where(effect => monitoredEffects.Add(effect)))
                 effect.OnValueChanged += HandleValueChanged;
