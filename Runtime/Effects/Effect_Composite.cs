@@ -6,8 +6,7 @@ using UnityEngine;
 
 namespace EasyTextEffects.Effects
 {
-    [CreateAssetMenu(fileName = "Composite", menuName = "Easy Text Effects/6. Composite",
-                     order = 6)]
+    [CreateAssetMenu(fileName = "Composite", menuName = "Easy Text Effects/6. Composite", order = 6)]
     public class Effect_Composite : TextEffectInstance
     {
         private HashSet<TextEffectInstance> monitoredEffects = new();
@@ -72,8 +71,7 @@ namespace EasyTextEffects.Effects
             }
         }
 
-        public override bool IsComplete =>
-            effects.Any(_effect => _effect != null && _effect.IsComplete);
+        public override bool IsComplete => effects.Any(_effect => _effect != null && _effect.IsComplete);
 
         public override TextEffectInstance Instantiate()
         {
