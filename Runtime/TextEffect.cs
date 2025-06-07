@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
@@ -9,7 +8,6 @@ using TMPro;
 using UnityEditor;
 #endif
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using static EasyTextEffects.TextEffectEntry.TriggerWhen;
 
@@ -31,7 +29,10 @@ namespace EasyTextEffects
 
         [Space(5)] [Range(1, 120)] public int updatesPerSecond = 30;
         
-        private readonly HashSet<TextEffectInstance> allEffectInstances = new ();
+        private static readonly List<TextEffectEntry> EmptyEffectEntryList = new();
+        private static readonly List<GlobalTextEffectEntry> EmptyGlobalEffectEntryList = new();
+        private readonly HashSet<TextEffectInstance> monitoredEffects = new ();
+        
         private List<TextEffectEntry> allTagEffects_;
         private List<TextEffectEntry> onStartTagEffects_;
         private List<TextEffectEntry> manualTagEffects_;
@@ -168,16 +169,16 @@ namespace EasyTextEffects
 
         private void ListenForEffectChanges()
         {
-            var effects = (tagEffects ?? new List<TextEffectEntry>())
-                          .Concat(globalEffects ?? new List<GlobalTextEffectEntry>())
+            var effects = (tagEffects ?? EmptyEffectEntryList)
+                          .Concat(globalEffects ?? EmptyGlobalEffectEntryList)
                           .Where(entry => entry.effect)
                           .Select(entry => entry.effect)
                           .ToHashSet();
 
-            foreach (var effect in effects.Where(effect => allEffectInstances.Add(effect)))
+            foreach (var effect in effects.Where(effect => monitoredEffects.Add(effect)))
                 effect.OnValueChanged += Refresh;
             
-            allEffectInstances.RemoveWhere(effect =>
+            monitoredEffects.RemoveWhere(effect =>
             {
                 if (effects.Contains(effect)) return false;
                 effect.OnValueChanged -= Refresh;
@@ -187,8 +188,8 @@ namespace EasyTextEffects
 
         private void StopListeningForEffectChanges()
         {
-            allEffectInstances.ForEach(x => x.OnValueChanged -= Refresh);
-            allEffectInstances.Clear();
+            monitoredEffects.ForEach(x => x.OnValueChanged -= Refresh);
+            monitoredEffects.Clear();
         }
 
         private void OnEnable()
