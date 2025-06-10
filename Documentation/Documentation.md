@@ -207,7 +207,10 @@ There are some debug buttons to help you test manual effects in the editor:
 
 <img src="Images/debug.png" width="50%" alt="">
 
-> If you have added/changed the effects during runtime and your text isn’t behaving correctly, you may want to call `textEffectScript.Refresh()`​ before calling the start effects methods. 
+> If your scripts make changes to the text or text effect component, you should call `textEffectComponent.Refresh()` after changes.
+
+> If your scripts make changes to the effects parameters, you should call `effect.HandleValueChanged()` to apply the changes. 
+> - for more information, see [Tutorial: Controlling Effects in Scripts](Tutorials/ControllingEffectsInScripts.md).
 
 #### Query Effect Statuses
 
