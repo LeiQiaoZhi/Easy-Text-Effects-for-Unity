@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using EasyTextEffects.Effects;
 using UnityEditor;
 
@@ -17,3 +18,4 @@ namespace EasyTextEffects.Editor
         }
     }
 }
+#endif
