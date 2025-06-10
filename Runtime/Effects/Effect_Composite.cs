@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using EasyTextEffects.Editor.MyBoxCopy.Extensions;
 using TMPro;
 using UnityEngine;
 
@@ -8,8 +9,15 @@ namespace EasyTextEffects.Effects
     [CreateAssetMenu(fileName = "Composite", menuName = "Easy Text Effects/6. Composite", order = 6)]
     public class Effect_Composite : TextEffectInstance
     {
+        private HashSet<TextEffectInstance> monitoredEffects = new();
+        
         [Space(10)] public List<TextEffectInstance> effects = new List<TextEffectInstance>();
 
+        private void OnEnable()
+        {
+            ListenForEffectChanges();
+        }
+        
         private void OnValidate()
         {
             if (effects.Contains(this))
@@ -17,6 +25,13 @@ namespace EasyTextEffects.Effects
                 Debug.LogError("Composite effect can't contain itself");
                 effects.Remove(this);
             }
+
+            ListenForEffectChanges();
+        }
+
+        private void OnDisable()
+        {
+            ListenForEffectChanges();
         }
 
         public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
@@ -69,6 +84,33 @@ namespace EasyTextEffects.Effects
             }
 
             return instance;
+        }
+        
+        private void ListenForEffectChanges()
+        {
+            if (effects.IsNullOrEmpty())
+            {
+                StopListeningForEffectChanges();
+                return;
+            }
+
+            var effectsSet = effects.Where(effect => effect).ToHashSet();
+    
+            foreach (var effect in effectsSet.Where(effect => monitoredEffects.Add(effect)))
+                effect.OnValueChanged += HandleValueChanged;
+
+            monitoredEffects.RemoveWhere(effect =>
+            {
+                if (effectsSet.Contains(effect)) return false;
+                effect.OnValueChanged -= HandleValueChanged;
+                return true;
+            });
+        }
+
+        private void StopListeningForEffectChanges()
+        {
+            monitoredEffects.ForEach(x => x.OnValueChanged -= HandleValueChanged);
+            monitoredEffects.Clear();
         }
     }
 }
