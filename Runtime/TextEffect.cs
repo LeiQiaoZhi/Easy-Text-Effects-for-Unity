@@ -301,28 +301,29 @@ namespace EasyTextEffects
             manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
         }
 
-        public GlobalTextEffectEntry StartManualEffect(string _effectName)
+        public GlobalTextEffectEntry FindManualEffect(string _effectName)
+        {
+            return manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
+        }
+
+        public void StartManualEffect(string _effectName)
         {
             GlobalTextEffectEntry effectEntry = manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
             if (effectEntry != null)
             {
                 effectEntry.StartEffect();
-                return effectEntry;
             }
             Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
-            return null;
         }
 
-        public TextEffectEntry StartManualTagEffect(string _effectName)
+        public void StartManualTagEffect(string _effectName)
         {
             TextEffectEntry effectEntry = manualTagEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
             if (effectEntry != null)
             {
                 effectEntry.StartEffect();
-                return effectEntry;
             }
             Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
-            return null;
         }
 
         public List<TextEffectStatus> QueryEffectStatuses(TextEffectType _effectType,
