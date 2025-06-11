@@ -173,6 +173,8 @@ namespace EasyTextEffects
 
         public void Refresh()
         {
+            ListenForEffectChanges();
+            
             if (text == null)
                 return;
             text.ForceMeshUpdate();
@@ -187,7 +189,6 @@ namespace EasyTextEffects
         private void OnValidate()
         {
 #if UNITY_EDITOR
-            ListenForEffectChanges();
             Refresh();
 #endif
         }
@@ -197,7 +198,6 @@ namespace EasyTextEffects
 #if UNITY_EDITOR
             EditorApplication.update += Update;
 #endif
-            ListenForEffectChanges();
             Refresh();
         }
 
