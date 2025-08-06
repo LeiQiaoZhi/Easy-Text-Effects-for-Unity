@@ -53,7 +53,8 @@ namespace EasyTextEffects.Samples
                 return;
             }
             currentText.StopOnStartEffects();
-            var effect = currentText.StartManualEffect("exit");
+            currentText.StartManualEffect("exit");
+            var effect = currentText.FindManualEffect("exit");
             if (effect == null)
             {
                 currentSlide.SetActive(false);
