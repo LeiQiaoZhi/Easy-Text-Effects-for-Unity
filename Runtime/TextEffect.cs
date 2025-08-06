@@ -313,7 +313,10 @@ namespace EasyTextEffects
             {
                 effectEntry.StartEffect();
             }
-            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            else
+            {
+                Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            }
         }
 
         public void StartManualTagEffect(string _effectName)
@@ -323,7 +326,10 @@ namespace EasyTextEffects
             {
                 effectEntry.StartEffect();
             }
-            Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            else
+            {
+                Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            }
         }
 
         public List<TextEffectStatus> QueryEffectStatuses(TextEffectType _effectType,
