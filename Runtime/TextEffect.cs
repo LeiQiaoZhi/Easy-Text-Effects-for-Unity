@@ -247,7 +247,14 @@ namespace EasyTextEffects
             }
 
             // apply changes and update mesh
-            for (var i = 0; i < textInfo.meshInfo.Length; i++)
+            // Bound by materialCount, not meshInfo.Length (the original code). meshInfo is
+            // a cache that only grows; when the text needs fewer sub-meshes than before
+            // (e.g. swapping font fallbacks for localization, removing a <sprite>/<material>),
+            // TMP clears the unused ones via SetMesh(null) but keeps their stale geometry,
+            // so iterating + UpdateGeometry here would revive ghost characters (a null check
+            // wouldn't catch them - the meshes are still alive). materialCount is the bound
+            // TMP itself uses: see TextMeshProUGUI.UpdateVertexData().
+            for (var i = 0; i < textInfo.materialCount; i++)
             {
                 TMP_MeshInfo meshInfo = textInfo.meshInfo[i];
 
