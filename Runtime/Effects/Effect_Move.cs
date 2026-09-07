@@ -14,16 +14,18 @@ namespace EasyTextEffects.Effects
         public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0, int _endVertex = 3)
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
-
             TMP_CharacterInfo charInfo = _textInfo.characterInfo[_charIndex];
             var materialIndex = charInfo.materialReferenceIndex;
             var verts = _textInfo.meshInfo[materialIndex].vertices;
+            
+            // Allocate Vectors outside the loop
+            Vector2 offset = Interpolate(startOffset, endOffset, _charIndex);
+            Vector3 offset3D = new Vector3(offset.x, offset.y, 0);
 
             for (var v = _startVertex; v <= _endVertex; v++)
             {
                 var vertexIndex = charInfo.vertexIndex + v;
-                Vector2 offset = Interpolate(startOffset, endOffset, _charIndex);
-                verts[vertexIndex] += new Vector3(offset.x, offset.y, 0);
+                verts[vertexIndex] += offset3D;
             }
         }
     }

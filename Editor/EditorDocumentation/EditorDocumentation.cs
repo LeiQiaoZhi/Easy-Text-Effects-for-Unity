@@ -8,6 +8,53 @@ namespace EasyTextEffects.Editor.EditorDocumentation
     {
         public static bool show = true;
 
+        // Cache styles to prevent per-frame allocations
+        private static GUIStyle _headingStyle;
+        private static GUIStyle _titleStyle;
+        private static GUIStyle _clickToExpandStyle;
+        private static GUIStyle _inlineButtonStyle;
+
+        private static void InitStyles()
+        {
+            if (_headingStyle == null)
+            {
+                _headingStyle = new GUIStyle(EditorStyles.label)
+                {
+                    fontStyle = FontStyle.Bold,
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleLeft
+                };
+            }
+            if (_titleStyle == null)
+            {
+                _titleStyle = new GUIStyle(EditorStyles.label)
+                {
+                    fontStyle = FontStyle.BoldAndItalic,
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleLeft
+                };
+            }
+            if (_clickToExpandStyle == null)
+            {
+                _clickToExpandStyle = new GUIStyle(EditorStyles.label)
+                {
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleRight
+                };
+            }
+            if (_inlineButtonStyle == null)
+            {
+                var iconDimension = EditorGUIUtility.singleLineHeight;
+                _inlineButtonStyle = new GUIStyle(GUI.skin.button)
+                {
+                    fixedHeight = iconDimension,
+                    fixedWidth = iconDimension,
+                    padding = new RectOffset(2, 2, 2, 2)
+                };
+            }
+        }
+
         public enum IconType
         {
             Help,
@@ -43,47 +90,29 @@ namespace EasyTextEffects.Editor.EditorDocumentation
         
         public static GUIStyle HeadingStyle()
         {
-            return new GUIStyle(EditorStyles.label)
-            {
-                fontStyle = FontStyle.Bold,
-                fontSize = 12,
-                alignment = TextAnchor.MiddleLeft
-            };
+            InitStyles();
+            return _headingStyle;
         }
-        
         public static GUIStyle TitleStyle()
         {
-            return new GUIStyle(EditorStyles.label)
-            {
-                fontStyle = FontStyle.BoldAndItalic,
-                fontSize = 12,
-                alignment = TextAnchor.MiddleLeft
-            };
+            InitStyles();
+            return _titleStyle;
         }
 
         public static void BeginFoldBox(string _title, ref bool _foldoutState, IconType _icon = IconType.Help)
         {
             if (!show) return;
+            InitStyles();
             EditorGUILayout.BeginVertical("HelpBox");
-
             // Create a horizontal layout for the foldout header
             EditorGUILayout.BeginHorizontal();
-
             // icon
             GUIContent icon = EditorGUIUtility.IconContent(GetIconName(_icon));
             GUILayout.Label(icon, GUILayout.Width(16), GUILayout.Height(16));
-
-            GUILayout.Label(_title, TitleStyle());
-
+            GUILayout.Label(_title, _titleStyle); // Use cached style
             // Right-aligned label for "(Click to expand)"
             GUILayout.FlexibleSpace();
-            var clickToExpandStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontStyle = FontStyle.Italic,
-                fontSize = 12,
-                alignment = TextAnchor.MiddleRight
-            };
-            GUILayout.Label(_foldoutState ? "(Click to collapse)" : "(Click to expand)", clickToExpandStyle);
+            GUILayout.Label(_foldoutState ? "(Click to collapse)" : "(Click to expand)", _clickToExpandStyle); // Use cached style
 
 
             EditorGUILayout.EndHorizontal();
@@ -156,24 +185,18 @@ namespace EasyTextEffects.Editor.EditorDocumentation
             }
         }
 
-        public static void InlineFoldBox(Rect _position, SerializedProperty _property, GUIContent _label, ref bool _foldoutState)
+                public static void InlineFoldBox(Rect _position, SerializedProperty _property, GUIContent _label, ref bool _foldoutState)
         {
             if (!show)
             {
                 EditorGUI.PropertyField(_position, _property, _label, true);
                 return;
             }
+            InitStyles();
             GUIContent icon = EditorGUIUtility.IconContent(GetIconName(IconType.Help));
-            
             var iconDimension = EditorGUIUtility.singleLineHeight;
-            var buttonStyle = new GUIStyle(GUI.skin.button)
-            {
-                fixedHeight = iconDimension,
-                fixedWidth = iconDimension,
-                padding = new RectOffset(2, 2, 2, 2)
-            };
             var rect = new Rect(_position.x, _position.y, iconDimension, iconDimension);
-            if (GUI.Button(rect, icon, buttonStyle))
+            if (GUI.Button(rect, icon, _inlineButtonStyle)) // Use cached style
             {
                 _foldoutState = !_foldoutState; // Toggle foldout state
                 Event.current.Use();

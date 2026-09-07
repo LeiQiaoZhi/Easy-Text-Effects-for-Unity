@@ -21,27 +21,52 @@ namespace EasyTextEffects.Editor
         private bool globalStartEffectStatusesVisible_ = true;
         private bool globalManualEffectStatusesVisible_ = true;
 
-        private bool documentationVisible_;
+                private bool documentationVisible_;
         private bool createEffectVisible_;
         private bool applyEffectVisible_;
         private bool controlEffectVisible_;
+
+        // Cache styles to prevent per-frame allocations
+        private static GUIStyle _buttonStyle;
+        private static GUIStyle _foldoutHeaderStyle;
+        private static GUIStyle _boldTextStyle;
+
+        private void InitStyles()
+        {
+            if (_buttonStyle == null)
+            {
+                _buttonStyle = new GUIStyle(GUI.skin.button)
+                {
+                    fontSize = 14,
+                    fixedHeight = 30,
+                    fontStyle = FontStyle.Bold
+                };
+            }
+            if (_foldoutHeaderStyle == null)
+            {
+                _foldoutHeaderStyle = new GUIStyle(EditorStyles.foldout)
+                {
+                    fontStyle = FontStyle.Bold
+                };
+            }
+            if (_boldTextStyle == null)
+            {
+                _boldTextStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontStyle = FontStyle.Bold
+                };
+            }
+        }
         
         public override void OnInspectorGUI()
         {
+            InitStyles(); // Initialize cached styles
             DrawDefaultInspector();
-            
-            Repaint();
-
+            // Don't repaint every frame
             var myScript = (TextEffect)target;
-
             GUILayout.Space(10);
 
-            var buttonStyle = new GUIStyle(GUI.skin.button);
-            buttonStyle.fontSize = 14;
-            buttonStyle.fixedHeight = 30;
-            buttonStyle.fontStyle = FontStyle.Bold;
-
-            if (GUILayout.Button("REFRESH", buttonStyle))
+            if (GUILayout.Button("REFRESH", _buttonStyle))
             {
                 if (myScript.text != null)
                 {
@@ -74,12 +99,12 @@ namespace EasyTextEffects.Editor
                 GUILayout.Space(10);
 
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("START Tag Manual Effects", buttonStyle))
+                if (GUILayout.Button("START Tag Manual Effects", _buttonStyle))
                 {
                     myScript.StartManualTagEffects();
                 }
 
-                if (GUILayout.Button("STOP", buttonStyle))
+                if (GUILayout.Button("STOP", _buttonStyle))
                 {
                     myScript.StopManualTagEffects();
                 }
@@ -87,12 +112,12 @@ namespace EasyTextEffects.Editor
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("START Global Manual Effects", buttonStyle))
+                if (GUILayout.Button("START Global Manual Effects", _buttonStyle))
                 {
                     myScript.StartManualEffects();
                 }
 
-                if (GUILayout.Button("STOP", buttonStyle))
+                if (GUILayout.Button("STOP", _buttonStyle))
                 {
                     myScript.StopManualEffects();
                 }
@@ -100,12 +125,12 @@ namespace EasyTextEffects.Editor
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("STOP All Effects", buttonStyle))
+                if (GUILayout.Button("STOP All Effects", _buttonStyle))
                 {
                     myScript.StopAllEffects();
                 }
 
-                if (GUILayout.Button("STOP OnStart Effects", buttonStyle))
+                if (GUILayout.Button("STOP OnStart Effects", _buttonStyle))
                 {
                     myScript.StopOnStartEffects();
                 }
@@ -118,14 +143,10 @@ namespace EasyTextEffects.Editor
             BeginFoldBox("Effect Statuses", ref effectStatusesVisible_, IconType.Tool);
             if (effectStatusesVisible_)
             {
-                var foldoutHeaderStyle = new GUIStyle(EditorStyles.foldout)
-                {
-                    fontStyle = FontStyle.Bold
-                };
                 EditorGUI.indentLevel++; // Increase indent level
                 tagStartEffectStatusesVisible_ =
-                    EditorGUILayout.Foldout(tagStartEffectStatusesVisible_, "Tag OnStart Effects", true,
-                        foldoutHeaderStyle);
+                EditorGUILayout.Foldout(tagStartEffectStatusesVisible_, "Tag OnStart Effects", true,
+                _foldoutHeaderStyle); // Use cached style
                 if (tagStartEffectStatusesVisible_)
                 {
                     var statuses =
@@ -136,7 +157,7 @@ namespace EasyTextEffects.Editor
 
                 tagManualEffectStatusesVisible_ =
                     EditorGUILayout.Foldout(tagManualEffectStatusesVisible_, "Tag Manual Effects", true,
-                        foldoutHeaderStyle);
+                        _foldoutHeaderStyle);
                 if (tagManualEffectStatusesVisible_)
                 {
                     var statuses = myScript.QueryEffectStatuses(TextEffectType.Tag, TextEffectEntry.TriggerWhen.Manual);
@@ -146,7 +167,7 @@ namespace EasyTextEffects.Editor
 
                 globalStartEffectStatusesVisible_ =
                     EditorGUILayout.Foldout(globalStartEffectStatusesVisible_, "Global OnStart Effects", true,
-                        foldoutHeaderStyle);
+                        _foldoutHeaderStyle);
                 if (globalStartEffectStatusesVisible_)
                 {
                     var statuses =
@@ -157,7 +178,7 @@ namespace EasyTextEffects.Editor
 
                 globalManualEffectStatusesVisible_ =
                     EditorGUILayout.Foldout(globalManualEffectStatusesVisible_, "Global Manual Effects", true,
-                        foldoutHeaderStyle);
+                        _foldoutHeaderStyle);
                 if (globalManualEffectStatusesVisible_)
                 {
                     var statuses =
@@ -252,7 +273,7 @@ There are some debug buttons to help you test manual effects in the editor.",
                 var started = status.Started ? "Started" : "Not Started";
                 var isComplete = status.IsComplete ? "Complete" : "Not Complete";
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(status.Tag, boldTextStyle, GUILayout.Width(100));
+                EditorGUILayout.LabelField(status.Tag, _boldTextStyle, GUILayout.Width(100));
                 EditorGUILayout.LabelField(started, GUILayout.Width(100));
                 EditorGUILayout.LabelField(isComplete, GUILayout.Width(100));
                 EditorGUILayout.EndHorizontal();

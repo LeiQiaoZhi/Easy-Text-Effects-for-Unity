@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 #if UNITY_2022_3_OR_NEWER
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,6 +10,24 @@ namespace EasyTextEffects.Editor.EditorDocumentation
     public class FoldBoxAttributeDrawer : PropertyDrawer
     {
         private bool foldoutState = false;
+        
+        // Cache loaded textures to prevent per-frame disk IO
+        private static Dictionary<string, Texture2D> _textureCache = new Dictionary<string, Texture2D>();
+
+        private Texture2D GetCachedTexture(string path)
+        {
+            if (!_textureCache.ContainsKey(path))
+            {
+                _textureCache[path] = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            }
+            return _textureCache[path];
+        }
+
+        [UnityEditor.Callbacks.DidReloadScripts]
+        private static void ClearCache()
+        {
+            _textureCache.Clear();
+        }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -51,7 +70,7 @@ namespace EasyTextEffects.Editor.EditorDocumentation
                 else
                 {
                     var param = _attribute.Content[i].Split(',');
-                    var image = AssetDatabase.LoadAssetAtPath<Texture2D>(param[0]);
+                    var image = GetCachedTexture(param[0]);
                     if (image != null)
                     {
                         if (param.Length == 1)

@@ -15,19 +15,21 @@ namespace EasyTextEffects.Effects
         public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0, int _endVertex = 3)
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
-
             TMP_CharacterInfo charInfo = _textInfo.characterInfo[_charIndex];
             var materialIndex = charInfo.materialReferenceIndex;
             var verts = _textInfo.meshInfo[materialIndex].vertices;
-
+            
+            // Calculate angle and quaternion once per character instead of vertex
             var angle = Interpolate(startAngle, endAngle, _charIndex);
+            Quaternion rotation = Quaternion.Euler(0, 0, angle);
+            
             Vector3 center = CharCenter(charInfo, verts) + new Vector3(centerOffset.x, centerOffset.y, 0);
             
             for (var v = _startVertex; v <= _endVertex; v++)
             {
                 var vertexIndex = charInfo.vertexIndex + v;
                 Vector3 fromCenter = verts[vertexIndex] - center;
-                verts[vertexIndex] = center + Quaternion.Euler(0, 0, angle) * fromCenter;
+                verts[vertexIndex] = center + rotation * fromCenter;
             }
         }
     }

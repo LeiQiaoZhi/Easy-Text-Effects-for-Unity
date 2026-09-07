@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using EasyTextEffects.Editor.MyBoxCopy.Attributes;
@@ -39,20 +40,26 @@ namespace EasyTextEffects
         private List<GlobalTextEffectEntry> onStartEffects_;
         private List<GlobalTextEffectEntry> manualEffects_;
         private List<TextEffectInstance> entryEffectsCopied_;
+        private bool _wasActiveLastFrame = false; // Track if an effect just finished so we can do a final reset
 
+        // Vertex caching to eliminate the need for ForceMeshUpdate() every frame
+        private Vector3[][] _baseVertices;
+        private Color32[][] _baseColors;
+        private bool _isMeshDirty = true;
         public void UpdateStyleInfos()
         {
             if (text == null || text.textInfo == null)
                 return;
+            
             TMP_TextInfo textInfo = text.textInfo;
-
             var styles = textInfo.linkInfo;
             var linkCount = textInfo.linkCount;
-
             CopyGlobalEffects(textInfo);
             AddTagEffects(styles, linkCount);
-
             StartOnStartEffects();
+            
+            // Flag that base vertices need to be recached
+            _isMeshDirty = true;
         }
 
         private void CopyGlobalEffects(TMP_TextInfo textInfo)
@@ -148,15 +155,32 @@ namespace EasyTextEffects
 
         private void ListenForEffectChanges()
         {
-            var effects = (tagEffects ?? EmptyEffectEntryList)
-                          .Concat(globalEffects ?? EmptyGlobalEffectEntryList)
-                          .Where(entry => entry.effect)
-                          .Select(entry => entry.effect)
-                          .ToHashSet();
-
-            foreach (var effect in effects.Where(effect => monitoredEffects.Add(effect)))
-                effect.OnValueChanged += Refresh;
+            HashSet<TextEffectInstance> effects = new HashSet<TextEffectInstance>();
             
+            if (tagEffects != null)
+            {
+                foreach (var entry in tagEffects)
+                {
+                    if (entry.effect != null)
+                        effects.Add(entry.effect);
+                }
+            }
+            
+            if (globalEffects != null)
+            {
+                foreach (var entry in globalEffects)
+                {
+                    if (entry.effect != null)
+                        effects.Add(entry.effect);
+                }
+            }
+
+            foreach (var effect in effects)
+            {
+                if (monitoredEffects.Add(effect))
+                    effect.OnValueChanged += Refresh;
+            }
+
             monitoredEffects.RemoveWhere(effect =>
             {
                 if (effects.Contains(effect)) return false;
@@ -167,7 +191,8 @@ namespace EasyTextEffects
 
         private void StopListeningForEffectChanges()
         {
-            monitoredEffects.ForEach(x => x.OnValueChanged -= Refresh);
+            foreach (var effect in monitoredEffects)
+                effect.OnValueChanged -= Refresh;
             monitoredEffects.Clear();
         }
 
@@ -195,26 +220,119 @@ namespace EasyTextEffects
 
         private void OnEnable()
         {
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
             EditorApplication.update += Update;
-#endif
+        #endif
+            // Listen to TMP's global text changed event to know when the mesh is rebuilt
+            TMPro_EventManager.TEXT_CHANGED_EVENT.Add(OnTextChanged);
             Refresh();
         }
 
         private void OnDisable()
         {
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
             EditorApplication.update -= Update;
-#endif
+        #endif
+            TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(OnTextChanged);
             StopListeningForEffectChanges();
         }
+        // Called by TMP whenever mesh is regenerated
+        private void OnTextChanged(UnityEngine.Object obj)
+        {
+            if (obj == text)
+            {
+                if (text != null && text.textInfo != null)
+                {
+                    // cache the new mesh
+                    CacheBaseMesh(text.textInfo);
+                    _isMeshDirty = false;
+                    
+                    // Update the charCount of global effects
+                    // but keep manual effects playing
+                    int charCount = text.textInfo.characterCount;
+                    UpdateGlobalEffectLengths(onStartEffects_, charCount);
+                    UpdateGlobalEffectLengths(manualEffects_, charCount);
+                }
+            }
+        }
 
+        // Helper to update the length of existing global effects without destroying them
+        private void UpdateGlobalEffectLengths(List<GlobalTextEffectEntry> list, int charCount)
+        {
+            if (list == null) return;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null && list[i].effect != null)
+                {
+                    list[i].effect.charLength = charCount;
+                }
+            }
+        }
+        // Manual checks to prevent GC allocations from LINQ
+        private bool HasActiveEffects()
+        {
+            if (HasActiveEffectsInList(onStartEffects_)) return true;
+            if (HasActiveEffectsInList(manualEffects_)) return true;
+            if (HasActiveEffectsInList(onStartTagEffects_)) return true;
+            if (HasActiveEffectsInList(manualTagEffects_)) return true;
+            return false;
+        }
+        private bool HasActiveEffectsInList<T>(List<T> list) where T : TextEffectEntry
+        {
+            if (list == null) return false;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var effect = list[i].effect;
+                if (effect != null && effect.started && !effect.IsComplete)
+                    return true;
+            }
+            return false;
+        }
+        private void CacheBaseMesh(TMP_TextInfo textInfo)
+        {
+            int materialCount = textInfo.materialCount;
+            _baseVertices = new Vector3[materialCount][];
+            _baseColors = new Color32[materialCount][];
+
+            for (int i = 0; i < materialCount; i++)
+            {
+                TMP_MeshInfo meshInfo = textInfo.meshInfo[i];
+                _baseVertices[i] = (Vector3[])meshInfo.vertices.Clone();
+                _baseColors[i] = (Color32[])meshInfo.colors32.Clone();
+            }
+        }
+
+        private void RestoreBaseMesh(TMP_TextInfo textInfo)
+        {
+            for (int i = 0; i < textInfo.materialCount; i++)
+            {
+                if (i < _baseVertices.Length && _baseVertices[i] != null && _baseVertices[i].Length == textInfo.meshInfo[i].vertices.Length)
+                {
+                    Array.Copy(_baseVertices[i], textInfo.meshInfo[i].vertices, _baseVertices[i].Length);
+                    Array.Copy(_baseColors[i], textInfo.meshInfo[i].colors32, _baseColors[i].Length);
+                }
+            }
+        }
         private float nextUpdateTime_ = 0;
 
         public void Update()
         {
-            if (!text)
+            if (!text || !isActiveAndEnabled) return;
+
+            // Check if any effects are active. If not, we can skip the update and avoid unnecessary mesh updates
+            bool hasActiveEffects = HasActiveEffects();
+            if (!hasActiveEffects)
+            {
+                // If an effect just finished, do one final update to reset the text to its original state
+                if (_wasActiveLastFrame)
+                {
+                    text.ForceMeshUpdate();
+                    _wasActiveLastFrame = false;
+                }
                 return;
+            }
+
+            _wasActiveLastFrame = true;
 
             // updates should be independent of time scale
             var time = TimeUtil.GetTime(TimeUtil.TimeType.UnscaledTime); 
@@ -222,32 +340,97 @@ namespace EasyTextEffects
                 return;
             nextUpdateTime_ = time + 1f / updatesPerSecond;
 
-            text.ForceMeshUpdate();
             TMP_TextInfo textInfo = text.textInfo;
+            if (textInfo == null) return;
 
-            for (var i = 0; i < textInfo.characterCount; i++)
+            // Check if we need a mesh update (text changed, or TMP resized arrays)
+            bool mustForceUpdate = false;
+            if (_isMeshDirty || _baseVertices == null || _baseVertices.Length != textInfo.materialCount)
+            {
+                mustForceUpdate = true;
+            }
+            else
+            {
+                for (int i = 0; i < textInfo.materialCount; i++)
+                {
+                    if (_baseVertices[i] == null || _baseVertices[i].Length != textInfo.meshInfo[i].vertices.Length)
+                    {
+                        mustForceUpdate = true;
+                        break;
+                    }
+                }
+            }
+
+            if (mustForceUpdate)
+            {
+                text.ForceMeshUpdate();
+                textInfo = text.textInfo; // Update textInfo
+                CacheBaseMesh(textInfo);
+                _isMeshDirty = false;
+            }
+            else
+            {
+                RestoreBaseMesh(textInfo);
+            }
+
+            if (textInfo == null || textInfo.characterCount == 0) return;
+            int charCount = textInfo.characterCount;
+
+            for (var i = 0; i < charCount; i++)
             {
                 TMP_CharacterInfo charInfo = textInfo.characterInfo[i];
                 if (!charInfo.isVisible)
                     continue;
 
                 var capturedI = i;
-                onStartEffects_.Where(_entry => !_entry.overrideTagEffects)
-                    .ForEach(_entry => _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
-                manualEffects_.Where(_entry => !_entry.overrideTagEffects).ForEach(_entry =>
-                    _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
+                // Replace LINQ with for loops to prevent garbage collection every frame
+                for (int e = 0; e < onStartEffects_.Count; e++)
+                {
+                    var entry = onStartEffects_[e];
+                    if (!entry.overrideTagEffects && entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
 
-                onStartTagEffects_.ForEach(_entry => _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
-                manualTagEffects_.ForEach(_entry => _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
+                for (int e = 0; e < manualEffects_.Count; e++)
+                {
+                    var entry = manualEffects_[e];
+                    if (!entry.overrideTagEffects && entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
 
-                onStartEffects_.Where(_entry => _entry.overrideTagEffects).ForEach(_entry =>
-                    _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
-                manualEffects_.Where(_entry => _entry.overrideTagEffects).ForEach(_entry =>
-                    _entry.effect.ApplyEffect(textInfo, capturedI, 0, 3));
+                for (int e = 0; e < onStartTagEffects_.Count; e++)
+                {
+                    var entry = onStartTagEffects_[e];
+                    if (entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
+
+                for (int e = 0; e < manualTagEffects_.Count; e++)
+                {
+                    var entry = manualTagEffects_[e];
+                    if (entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
+
+                for (int e = 0; e < onStartEffects_.Count; e++)
+                {
+                    var entry = onStartEffects_[e];
+                    if (entry.overrideTagEffects && entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
+
+                for (int e = 0; e < manualEffects_.Count; e++)
+                {
+                    var entry = manualEffects_[e];
+                    if (entry.overrideTagEffects && entry.effect != null)
+                        entry.effect.ApplyEffect(textInfo, capturedI, 0, 3);
+                }
             }
 
+
             // apply changes and update mesh
-            for (var i = 0; i < textInfo.meshInfo.Length; i++)
+            // (use textInfo.materialCount instead of textInfo.meshInfo.Length to avoid processing leftover meshes)
+            for (var i = 0; i < textInfo.materialCount; i++)
             {
                 TMP_MeshInfo meshInfo = textInfo.meshInfo[i];
 
@@ -262,43 +445,43 @@ namespace EasyTextEffects
 
         public void StopAllEffects()
         {
-            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
-            manualEffects_.ForEach(_entry => _entry.effect.StopEffect());
-            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
-            manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            for (int i = 0; i < onStartEffects_.Count; i++) onStartEffects_[i].effect.StopEffect();
+            for (int i = 0; i < manualEffects_.Count; i++) manualEffects_[i].effect.StopEffect();
+            for (int i = 0; i < onStartTagEffects_.Count; i++) onStartTagEffects_[i].effect.StopEffect();
+            for (int i = 0; i < manualTagEffects_.Count; i++) manualTagEffects_[i].effect.StopEffect();
         }
 
         public void StartOnStartEffects()
         {
-            onStartEffects_.ForEach(_entry => _entry.StartEffect());
-            onStartTagEffects_.ForEach(_entry => _entry.StartEffect());
+            for (int i = 0; i < onStartEffects_.Count; i++) onStartEffects_[i].StartEffect();
+            for (int i = 0; i < onStartTagEffects_.Count; i++) onStartTagEffects_[i].StartEffect();
             nextUpdateTime_ = 0; // immediately update
         }
 
         public void StopOnStartEffects()
         {
-            onStartEffects_.ForEach(_entry => _entry.effect.StopEffect());
-            onStartTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            for (int i = 0; i < onStartEffects_.Count; i++) onStartEffects_[i].effect.StopEffect();
+            for (int i = 0; i < onStartTagEffects_.Count; i++) onStartTagEffects_[i].effect.StopEffect();
         }
 
         public void StartManualEffects()
         {
-            manualEffects_.ForEach(_entry => _entry.StartEffect());
+            for (int i = 0; i < manualEffects_.Count; i++) manualEffects_[i].StartEffect();
         }
 
         public void StopManualEffects()
         {
-            manualEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            for (int i = 0; i < manualEffects_.Count; i++) manualEffects_[i].effect.StopEffect();
         }
 
         public void StartManualTagEffects()
         {
-            manualTagEffects_.ForEach(_entry => _entry.StartEffect());
+            for (int i = 0; i < manualTagEffects_.Count; i++) manualTagEffects_[i].StartEffect();
         }
 
         public void StopManualTagEffects()
         {
-            manualTagEffects_.ForEach(_entry => _entry.effect.StopEffect());
+            for (int i = 0; i < manualTagEffects_.Count; i++) manualTagEffects_[i].effect.StopEffect();
         }
 
         public GlobalTextEffectEntry FindManualEffect(string _effectName)
@@ -308,27 +491,60 @@ namespace EasyTextEffects
 
         public void StartManualEffect(string _effectName)
         {
-            GlobalTextEffectEntry effectEntry = manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
+            if (manualEffects_ == null) 
+            {
+                Debug.LogWarning($"Effect {_effectName} not found. No manual effects are loaded.");
+                return;
+            }
+
+            GlobalTextEffectEntry effectEntry = null;
+            for (int i = 0; i < manualEffects_.Count; i++)
+            {
+                if (manualEffects_[i].effect != null && manualEffects_[i].effect.effectTag == _effectName)
+                {
+                    effectEntry = manualEffects_[i];
+                    break;
+                }
+            }
+
             if (effectEntry != null)
             {
                 effectEntry.StartEffect();
             }
             else
             {
-                Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+                var available = manualEffects_.Where(e => e.effect != null).Select(e => e.effect.effectTag).ToList();
+                Debug.LogWarning($"Global Effect {_effectName} not found. Available global effects: {(available.Count > 0 ? string.Join(", ", available) : "None")}");
             }
         }
 
         public void StartManualTagEffect(string _effectName)
         {
-            TextEffectEntry effectEntry = manualTagEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
+            if (manualTagEffects_ == null) 
+            {
+                Debug.LogWarning($"Tag Effect '{_effectName}' not found. No tag effects are loaded. Ensure your text contains <<link={_effectName}>text</link>> and Refresh() has been called.");
+                return;
+            }
+
+            TextEffectEntry effectEntry = null;
+            for (int i = 0; i < manualTagEffects_.Count; i++)
+            {
+                if (manualTagEffects_[i].effect != null && manualTagEffects_[i].effect.effectTag == _effectName)
+                {
+                    effectEntry = manualTagEffects_[i];
+                    break;
+                }
+            }
+
             if (effectEntry != null)
             {
                 effectEntry.StartEffect();
             }
             else
             {
-                Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+                var availableTags = manualTagEffects_.Where(e => e.effect != null).Select(e => e.effect.effectTag).ToList();
+                string availableStr = availableTags.Count > 0 ? string.Join(", ", availableTags) : "None";
+                Debug.LogWarning($"Tag Effect '{_effectName}' not found. Available tag effects: {availableStr}. Make sure the text contains <<link={_effectName}>text</link>> and Refresh() was called after setting the text.");
             }
         }
 

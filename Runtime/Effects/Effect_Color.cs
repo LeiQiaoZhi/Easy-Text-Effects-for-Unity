@@ -61,18 +61,30 @@ namespace EasyTextEffects.Effects
         [ConditionalField(nameof(colorType), false, ColorType.OnlyAlpha)] [Range(0, 1)]
         public float endAlpha = 1;
 
-        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0,
-            int _endVertex = 3)
+        public override void ApplyEffect(TMP_TextInfo _textInfo, int _charIndex, int _startVertex = 0, int _endVertex = 3)
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
-
             TMP_CharacterInfo charInfo = _textInfo.characterInfo[_charIndex];
             var materialIndex = charInfo.materialReferenceIndex;
+
+            // Pre-calculate interpolation for uniform color types
+            Color uniformColor = default;
+            float uniformAlpha = default;
+            
+            if (colorType == ColorType.BetweenTwoColors)
+            {
+                uniformColor = Interpolate(startColor, endColor, _charIndex);
+            }
+            else if (colorType == ColorType.OnlyAlpha)
+            {
+                uniformAlpha = Interpolate(startAlpha, endAlpha, _charIndex);
+            }
 
             for (var v = _startVertex; v <= _endVertex; v++)
             {
                 var vertexIndex = charInfo.vertexIndex + v;
                 Color color = _textInfo.meshInfo[materialIndex].colors32[vertexIndex];
+                
                 if (colorType == ColorType.Gradient)
                 {
                     if (orientation == GradientOrientation.Horizontal)
@@ -80,7 +92,6 @@ namespace EasyTextEffects.Effects
                         var t = Interpolate(0, 1, _charIndex);
                         color = gradient.Evaluate(t);
                     }
-
                     if (orientation == GradientOrientation.HorizontalPerCharacter)
                     {
                         var start = Interpolate(0, 1, _charIndex);
@@ -88,7 +99,6 @@ namespace EasyTextEffects.Effects
                         var t = v == 0 || v == 1 ? start : end;
                         color = gradient.Evaluate(t);
                     }
-
                     if (orientation == GradientOrientation.Vertical)
                     {
                         var start = Interpolate(0, 1, _charIndex);
@@ -99,11 +109,11 @@ namespace EasyTextEffects.Effects
                 }
                 else if (colorType == ColorType.BetweenTwoColors)
                 {
-                    color = Interpolate(startColor, endColor, _charIndex);
+                    color = uniformColor;
                 }
                 else if (colorType == ColorType.OnlyAlpha)
                 {
-                    color.a = Interpolate(startAlpha, endAlpha, _charIndex);
+                    color.a = uniformAlpha;
                 }
                 else if (colorType == ColorType.ColorToOriginal)
                 {
@@ -113,7 +123,6 @@ namespace EasyTextEffects.Effects
                 {
                     color = Interpolate(color, endColor, _charIndex);
                 }
-
                 _textInfo.meshInfo[materialIndex].colors32[vertexIndex] = color;
             }
         }

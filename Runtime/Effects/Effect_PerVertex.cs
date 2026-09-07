@@ -61,10 +61,10 @@ namespace EasyTextEffects.Effects
         {
             if (!CheckCanApplyEffect(_charIndex)) return;
 
-            topLeftEffects.ForEach(_effect => _effect?.ApplyEffect(_textInfo, _charIndex, 1, 1));
-            topRightEffects.ForEach(_effect => _effect?.ApplyEffect(_textInfo, _charIndex, 2, 2));
-            bottomLeftEffects.ForEach(_effect => _effect?.ApplyEffect(_textInfo, _charIndex, 0, 0));
-            bottomRightEffects.ForEach(_effect => _effect?.ApplyEffect(_textInfo, _charIndex, 3, 3));
+            for (int i = 0; i < topLeftEffects.Count; i++) topLeftEffects[i]?.ApplyEffect(_textInfo, _charIndex, 1, 1);
+            for (int i = 0; i < topRightEffects.Count; i++) topRightEffects[i]?.ApplyEffect(_textInfo, _charIndex, 2, 2);
+            for (int i = 0; i < bottomLeftEffects.Count; i++) bottomLeftEffects[i]?.ApplyEffect(_textInfo, _charIndex, 0, 0);
+            for (int i = 0; i < bottomRightEffects.Count; i++) bottomRightEffects[i]?.ApplyEffect(_textInfo, _charIndex, 3, 3);
         }
 
         public override void StartEffect(TextEffectEntry entry)
@@ -77,15 +77,15 @@ namespace EasyTextEffects.Effects
                 bottomLeftEffects,
                 bottomRightEffects
             };
-
+            
             foreach (var effects in allEffects)
             {
-                foreach (TextEffectInstance effect in effects)
+                for (int i = 0; i < effects.Count; i++)
                 {
-                    if (!effect) continue;
-                    effect.startCharIndex = startCharIndex;
-                    effect.charLength = charLength;
-                    effect.StartEffect(entry);
+                    if (effects[i] == null) continue;
+                    effects[i].startCharIndex = startCharIndex;
+                    effects[i].charLength = charLength;
+                    effects[i].StartEffect(entry);
                 }
             }
         }
@@ -94,20 +94,33 @@ namespace EasyTextEffects.Effects
         {
             get
             {
-                var allEffects = topLeftEffects.Concat(topRightEffects).Concat(bottomLeftEffects)
-                    .Concat(bottomRightEffects);
-                return allEffects.Any(_effect => _effect != null && _effect.IsComplete);
+                if (HasCompletedEffect(topLeftEffects)) return true;
+                if (HasCompletedEffect(topRightEffects)) return true;
+                if (HasCompletedEffect(bottomLeftEffects)) return true;
+                if (HasCompletedEffect(bottomRightEffects)) return true;
+                return false;
             }
+        }
+        // Helper for IsComplete
+        private bool HasCompletedEffect(List<TextEffectInstance> effects)
+        {
+            if (effects == null) return false;
+            for (int i = 0; i < effects.Count; i++)
+            {
+                if (effects[i] != null && effects[i].IsComplete)
+                    return true;
+            }
+            return false;
         }
 
         public override void StopEffect()
         {
             base.StopEffect();
 
-            topLeftEffects.ForEach(_effect => _effect?.StopEffect());
-            topRightEffects.ForEach(_effect => _effect?.StopEffect());
-            bottomLeftEffects.ForEach(_effect => _effect?.StopEffect());
-            bottomRightEffects.ForEach(_effect => _effect?.StopEffect());
+            for (int i = 0; i < topLeftEffects.Count; i++) topLeftEffects[i]?.StopEffect();
+            for (int i = 0; i < topRightEffects.Count; i++) topRightEffects[i]?.StopEffect();
+            for (int i = 0; i < bottomLeftEffects.Count; i++) bottomLeftEffects[i]?.StopEffect();
+            for (int i = 0; i < bottomRightEffects.Count; i++) bottomRightEffects[i]?.StopEffect();
         }
 
         public override TextEffectInstance Instantiate()
@@ -122,27 +135,42 @@ namespace EasyTextEffects.Effects
         
         private void ListenForEffectChanges()
         {
-            var effects = (topLeftEffects ?? EmptyEffectInstanceList)
-                          .Concat(topRightEffects ?? EmptyEffectInstanceList)
-                          .Concat(bottomLeftEffects ?? EmptyEffectInstanceList)
-                          .Concat(bottomRightEffects ?? EmptyEffectInstanceList)
-                          .Where(effect => effect)
-                          .ToHashSet();
-    
-            foreach (var effect in effects.Where(effect => monitoredEffects.Add(effect)))
-                effect.OnValueChanged += HandleValueChanged;
+            HashSet<TextEffectInstance> effectsSet = new HashSet<TextEffectInstance>();
+            AddEffectsToSet(topLeftEffects, effectsSet);
+            AddEffectsToSet(topRightEffects, effectsSet);
+            AddEffectsToSet(bottomLeftEffects, effectsSet);
+            AddEffectsToSet(bottomRightEffects, effectsSet);
+
+            foreach (var effect in effectsSet)
+            {
+                if (monitoredEffects.Add(effect))
+                    effect.OnValueChanged += HandleValueChanged;
+            }
 
             monitoredEffects.RemoveWhere(effect =>
             {
-                if (effects.Contains(effect)) return false;
+                if (effectsSet.Contains(effect)) return false;
                 effect.OnValueChanged -= HandleValueChanged;
                 return true;
             });
         }
+        // Helper for ListenForEffectChanges
+        private void AddEffectsToSet(List<TextEffectInstance> list, HashSet<TextEffectInstance> set)
+        {
+            if (list == null) return;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null)
+                    set.Add(list[i]);
+            }
+        }
 
         private void StopListeningForEffectChanges()
         {
-            monitoredEffects.ForEach(x => x.OnValueChanged -= HandleValueChanged);
+            foreach (var effect in monitoredEffects)
+            {
+                effect.OnValueChanged -= HandleValueChanged;
+            }
             monitoredEffects.Clear();
         }
     }
