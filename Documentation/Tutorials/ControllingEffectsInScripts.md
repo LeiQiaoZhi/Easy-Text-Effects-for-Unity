@@ -26,7 +26,7 @@ This gif shows an example of using a slider to control the offset of a move effe
 
 ## Stopping An Effect
 
-Given a Text Effect component, you can call `StopAllEffects()` or `StopManualEffects()` or `StopOnStartEffects()`. 
+Given a Text Effect component, you can call `StopAllEffects()`, `StopManualEffects()`, `StopManualEffect(string effectName)`, or `StopOnStartEffects()`. `StopManualEffect` finds the manual effect by name the same way `StartManualEffect(string)` does, and logs a warning when that name is missing. 
 
 "Stop" here means immediately return to the neutral state of the text.
 

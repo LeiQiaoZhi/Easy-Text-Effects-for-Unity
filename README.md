@@ -13,6 +13,11 @@
 
 [**📦 Install from GitHub url**](Documentation/Documentation.md#installation)
 
+## 🎮 Unity Version
+
+- **Required: Unity 2021.3 or newer.** That minimum is declared as `"unity": "2021.3"` in [`package.json`](package.json).
+- **Inspector embedded documentation is disabled before Unity 2022.3.** Help boxes in the inspector (see [Embedded Documentation](Documentation/EmbeddedDocumentation.md)) are compiled only for `UNITY_2022_3_OR_NEWER`. Animations and the other features still work on Unity 2021.3 and later.
+
 | ![Combine](Documentation/Images/combine.gif) | ![Entry](Documentation/Images/entry.gif) | ![Customize](Documentation/Images/customize.gif) |
 |----------------------------------------------|------------------------------------------|--------------------------------------------------|
 

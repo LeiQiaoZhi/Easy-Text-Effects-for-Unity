@@ -229,7 +229,9 @@ Tag effects are applied by adding a rich text tag to the text. The format is <li
 - `On Start`: The effect will start when the text is enabled.
 - `Manual`: The effect will start only when a script tells it to.
    - `StartAllManualEffects()`: start all manual effects in the global list.
-   - `StartManualEffects(string effectName)`: start the manual effect with the given name in the global list.
+   - `StartManualEffect(string effectName)`: start the manual effect with the given name in the global list.
+   - `StopManualEffects()`: stop all manual effects in the global list.
+   - `StopManualEffect(string effectName)`: stop the manual effect with the given name in the global list.
    - `StartManualTagEffects()`: start all manual effects in the tag list.
    - `StartManualTagEffects(string effectName)`: start the manual effect with the given name in the tag list.
 

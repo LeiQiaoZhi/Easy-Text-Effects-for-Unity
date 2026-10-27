@@ -8,6 +8,11 @@ Table of Contents
 
 ## 📦 Installation
 
+### Unity Version
+
+- **Required: Unity 2021.3 or newer.** [`package.json`](../package.json) sets `"unity": "2021.3"`, which is the lowest Unity version this package supports.
+- **Inspector embedded documentation is disabled before Unity 2022.3.** The help boxes described in [Embedded Documentation](EmbeddedDocumentation.md) are wrapped in `UNITY_2022_3_OR_NEWER` (`Editor/EditorDocumentation/FoldBoxAttributeDrawer.cs`). The rest of the package, including text animations, still runs on Unity 2021.3 and later.
+
 The easiest way is to [install Easy Text Effects as a package](https://docs.unity3d.com/Manual/upm-ui-giturl.html).
 
 1. Open **Window/Package Manager** in Unity.
@@ -198,7 +203,9 @@ Every element of an effect list has a `Trigger When` field, which determines whe
 - `On Start`: The effect will start when the text is enabled.
 - `Manual`: The effect will start only when a script tells it to.
    - `StartManualEffects()`: start all manual effects in the global list.
-   - `StartManualEffects(string effectName)`: start the manual effect with the given name in the global list.
+   - `StartManualEffect(string effectName)`: start the manual effect with the given name in the global list.
+   - `StopManualEffects()`: stop all manual effects in the global list.
+   - `StopManualEffect(string effectName)`: stop the manual effect with the given name in the global list. Missing names log the same warning as `StartManualEffect`.
    - `StartManualTagEffects()`: start all manual effects in the tag list.
    - `StartManualTagEffects(string effectName)`: start the manual effect with the given name in the tag list.
    - There are also corresponding `Stop` methods. For implmentations, look at `Runtime\TextEffect.cs`.

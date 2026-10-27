@@ -319,6 +319,19 @@ namespace EasyTextEffects
             }
         }
 
+        public void StopManualEffect(string _effectName)
+        {
+            GlobalTextEffectEntry effectEntry = manualEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
+            if (effectEntry != null)
+            {
+                effectEntry.effect.StopEffect();
+            }
+            else
+            {
+                Debug.LogWarning($"Effect {_effectName} not found. Available effects: {string.Join(", ", manualEffects_.Select(_entry => _entry.effect.effectTag).ToList())}");
+            }
+        }
+
         public void StartManualTagEffect(string _effectName)
         {
             TextEffectEntry effectEntry = manualTagEffects_.Find(_entry => _entry.effect.effectTag == _effectName);
